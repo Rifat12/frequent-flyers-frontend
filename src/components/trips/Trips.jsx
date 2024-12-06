@@ -57,38 +57,95 @@ export default function Trips() {
     }
   };
 
+  const formatDate = (dateString) => {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
   return (
-    <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-        <Typography variant="h4">My Trips</Typography>
+    <Box sx={{ width: '100%', p: 3 }}>
+      <Box sx={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center",
+        mb: 4,
+        width: '100%'
+      }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>My Trips</Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setOpenDialog(true)}
+          sx={{
+            borderRadius: 2,
+            px: 3,
+          }}
         >
           New Trip
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={3} sx={{ width: '100%', m: 0 }}>
         {trips.map((trip) => (
           <Grid item xs={12} sm={6} md={4} key={trip.id}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6">{trip.name}</Typography>
-                <Typography color="textSecondary">
+            <Card 
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 4,
+                },
+                borderRadius: 2,
+                bgcolor: 'background.paper',
+              }}
+            >
+              <CardContent sx={{ p: 3, flexGrow: 1 }}>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', fontSize: '1.25rem' }}>
+                  {trip.name}
+                </Typography>
+                <Typography 
+                  color="primary" 
+                  sx={{ 
+                    mb: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontWeight: 500,
+                    fontSize: '1.1rem'
+                  }}
+                >
                   {trip.destination}
                 </Typography>
-                <Typography variant="body2">
-                  {new Date(trip.startDate).toLocaleDateString()} -{" "}
-                  {new Date(trip.endDate).toLocaleDateString()}
-                </Typography>
+                <Box sx={{ mt: 2 }}>
+                  <Typography 
+                    variant="body1" 
+                    color="text.secondary"
+                    sx={{ mb: 1 }}
+                  >
+                    From: {formatDate(trip.startDate)}
+                  </Typography>
+                  <Typography 
+                    variant="body1" 
+                    color="text.secondary"
+                  >
+                    To: {formatDate(trip.endDate)}
+                  </Typography>
+                </Box>
               </CardContent>
-              <CardActions>
+              <CardActions sx={{ p: 3, pt: 0 }}>
                 <Button
-                  size="small"
+                  variant="outlined"
+                  fullWidth
                   color="primary"
                   onClick={() => navigate(`/trips/${trip.id}`)}
+                  sx={{ 
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    py: 1
+                  }}
                 >
                   View Details
                 </Button>
@@ -98,9 +155,19 @@ export default function Trips() {
         ))}
       </Grid>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Create New Trip</DialogTitle>
-        <DialogContent>
+      <Dialog 
+        open={openDialog} 
+        onClose={() => setOpenDialog(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            width: '100%',
+            maxWidth: 'sm',
+          }
+        }}
+      >
+        <DialogTitle sx={{ pb: 1, px: 3 }}>Create New Trip</DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
           <TextField
             autoFocus
             margin="dense"
@@ -108,6 +175,7 @@ export default function Trips() {
             fullWidth
             value={newTrip.name}
             onChange={(e) => setNewTrip({ ...newTrip, name: e.target.value })}
+            sx={{ mb: 2 }}
           />
           <TextField
             margin="dense"
@@ -117,6 +185,7 @@ export default function Trips() {
             onChange={(e) =>
               setNewTrip({ ...newTrip, destination: e.target.value })
             }
+            sx={{ mb: 2 }}
           />
           <TextField
             margin="dense"
@@ -128,6 +197,7 @@ export default function Trips() {
             onChange={(e) =>
               setNewTrip({ ...newTrip, startDate: e.target.value })
             }
+            sx={{ mb: 2 }}
           />
           <TextField
             margin="dense"
@@ -141,15 +211,30 @@ export default function Trips() {
             }
           />
           {error && (
-            <Typography color="error" sx={{ mt: 1 }}>
+            <Typography color="error" sx={{ mt: 2 }}>
               {error}
             </Typography>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button onClick={handleCreateTrip} color="primary">
-            Create
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button 
+            onClick={() => setOpenDialog(false)}
+            sx={{ 
+              textTransform: 'none',
+              px: 3
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleCreateTrip} 
+            variant="contained"
+            sx={{ 
+              textTransform: 'none',
+              px: 3
+            }}
+          >
+            Create Trip
           </Button>
         </DialogActions>
       </Dialog>
