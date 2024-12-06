@@ -99,7 +99,7 @@ export default function FlightBooking() {
     setLoading(true);
     setError('');
     try {
-      await axios.post('http://localhost:4000/flight/book', {
+      await axios.post('http://localhost:4000/flights/book', {
         tripId: tripId,
         flightOfferInfo: flight,
         passengerInfo: passengers.map(passenger => ({
