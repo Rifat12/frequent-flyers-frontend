@@ -37,23 +37,46 @@ export default function Register() {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
-        <Box
+    <Box
+      sx={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #5D9FFF 0%, #B85FFF 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundAttachment: 'fixed',
+        p: 2,
+      }}
+    >
+      <Container component="main" maxWidth="xs">
+        <Paper
+          elevation={5}
           sx={{
+            borderRadius: 3,
+            p: 4,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            backdropFilter: 'blur(10px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.85)'
           }}
         >
-          <Typography component="h1" variant="h5">
-            Sign up
-          </Typography>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+          <Box sx={{ mb: 3, textAlign: 'center' }}>
+            <Typography component="h1" variant="h4" fontWeight="bold">
+              Create an Account
+            </Typography>
+            <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
+              Sign up to get started
+            </Typography>
+          </Box>
+
+          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 1 }}>
             <TextField
               margin="normal"
               required
               fullWidth
+              variant="filled"
+              color="primary"
               id="email"
               label="Email Address"
               name="email"
@@ -61,50 +84,72 @@ export default function Register() {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              sx={{ backgroundColor: 'white', borderRadius: 1 }}
             />
+
             <TextField
               margin="normal"
               required
               fullWidth
+              variant="filled"
+              color="primary"
               name="password"
               label="Password"
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              sx={{ backgroundColor: 'white', borderRadius: 1 }}
             />
+
             <TextField
               margin="normal"
               required
               fullWidth
+              variant="filled"
+              color="primary"
               name="confirmPassword"
               label="Confirm Password"
               type="password"
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              sx={{ backgroundColor: 'white', borderRadius: 1 }}
             />
+
             {error && (
-              <Typography color="error" sx={{ mt: 1 }}>
+              <Typography color="error" sx={{ mt: 2, textAlign: 'center' }}>
                 {error}
               </Typography>
             )}
+
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              size="large"
+              sx={{
+                mt: 3,
+                mb: 2,
+                py: 1.5,
+                fontWeight: 'bold',
+                background: 'linear-gradient(to right, #5D9FFF, #B85FFF)',
+              }}
             >
               Sign Up
             </Button>
-            <Box sx={{ textAlign: 'center' }}>
-              <Link href="/login" variant="body2">
-                {"Already have an account? Sign In"}
-              </Link>
+
+            <Box sx={{ textAlign: 'center', mt: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Already have an account?{' '}
+                <Link href="/login" variant="body2" underline="hover" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                  Sign In
+                </Link>
+              </Typography>
             </Box>
           </Box>
-        </Box>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

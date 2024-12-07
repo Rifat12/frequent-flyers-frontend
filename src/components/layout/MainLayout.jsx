@@ -37,7 +37,6 @@ export default function MainLayout({ children }) {
 
   const menuItems = [
     { text: 'My Trips', icon: <FlightTakeoff />, path: '/trips' },
-    { text: 'Events', icon: <Event />, path: '/events' }
   ];
 
   const toggleDrawer = (open) => (event) => {

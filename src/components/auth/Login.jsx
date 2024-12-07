@@ -21,7 +21,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     const result = await login(email, password);
     if (result.success) {
       navigate('/trips');
@@ -31,23 +31,44 @@ export default function Login() {
   };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <Paper elevation={3} sx={{ p: 4, mt: 8 }}>
-        <Box
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #5D9FFF 0%, #B85FFF 100%)',
+        p: 2,
+      }}
+    >
+      <Container component="main" maxWidth="xs">
+        <Paper
+          elevation={5}
           sx={{
+            borderRadius: 3,
+            p: 4,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            backdropFilter: 'blur(10px)',
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.2)',
           }}
         >
-          <Typography component="h1" variant="h5">
-            Sign in
+          <Typography component="h1" variant="h4" fontWeight="bold" textAlign="center">
+            Welcome Back
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+          <Typography variant="subtitle1" color="text.secondary" textAlign="center" sx={{ mt: 1 }}>
+            Sign in to continue
+          </Typography>
+
+          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 2 }}>
             <TextField
               margin="normal"
               required
               fullWidth
+              variant="filled"
+              color="primary"
               id="email"
               label="Email Address"
               name="email"
@@ -55,11 +76,14 @@ export default function Login() {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              sx={{ backgroundColor: 'white', borderRadius: 1 }}
             />
             <TextField
               margin="normal"
               required
               fullWidth
+              variant="filled"
+              color="primary"
               name="password"
               label="Password"
               type="password"
@@ -67,28 +91,40 @@ export default function Login() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              sx={{ backgroundColor: 'white', borderRadius: 1 }}
             />
+
             {error && (
-              <Typography color="error" sx={{ mt: 1 }}>
+              <Typography color="error" sx={{ mt: 2, textAlign: 'center' }}>
                 {error}
               </Typography>
             )}
+
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              size="large"
+              sx={{
+                mt: 3,
+                mb: 2,
+                py: 1.5,
+                fontWeight: 'bold',
+                background: 'linear-gradient(to right, #5D9FFF, #B85FFF)',
+              }}
             >
               Sign In
             </Button>
-            <Box sx={{ textAlign: 'center' }}>
-              <Link href="/register" variant="body2">
-                {"Don't have an account? Sign Up"}
+
+            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 2 }}>
+              Don&apos;t have an account?{' '}
+              <Link href="/register" variant="body2" underline="hover" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                Sign Up
               </Link>
-            </Box>
+            </Typography>
           </Box>
-        </Box>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 }
