@@ -10,14 +10,18 @@ import {
   Divider,
   Chip,
   Button,
-  CircularProgress
+  CircularProgress,
+  Container,
+  Stack,
+  IconButton,
 } from '@mui/material';
 import {
   FlightTakeoff,
   FlightLand,
   AccessTime,
   Airlines,
-  Person
+  Person,
+  ArrowBack
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -27,6 +31,28 @@ export default function FlightDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [flightDetails, setFlightDetails] = useState(null);
+
+  function formatDuration(isoDuration) {
+    // ISO 8601 duration format generally looks like: PT#H#M#S
+    // For example: PT2H30M means 2 hours and 30 minutes.
+    
+    // Extract hours, minutes, and seconds using a regex.
+    const match = isoDuration.match(/P(T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)/);
+  
+    if (!match) return isoDuration; // return original if not matched
+  
+    const hours = match[2] ? parseInt(match[2], 10) : 0;
+    const minutes = match[3] ? parseInt(match[3], 10) : 0;
+    const seconds = match[4] ? parseInt(match[4], 10) : 0;
+  
+    let result = '';
+    if (hours > 0) result += `${hours}h `;
+    if (minutes > 0) result += `${minutes}m `;
+    if (seconds > 0) result += `${seconds}s`;
+  
+    return result.trim();
+  }
+  
 
   useEffect(() => {
     const fetchFlightDetails = async () => {
@@ -64,123 +90,151 @@ export default function FlightDetails() {
 
   if (error || !flightDetails) {
     return (
-      <Box sx={{ mt: 4 }}>
-        <Typography color="error" align="center">{error || 'Flight not found'}</Typography>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+      <Container sx={{ mt: 4 }}>
+        <Paper elevation={3} sx={{ p: 3, textAlign: 'center' }}>
+          <Typography color="error" variant="h6" gutterBottom>
+            {error || 'Flight not found'}
+          </Typography>
           <Button variant="contained" onClick={() => navigate(`/trips/${tripId}`)}>
             Back to Trip
           </Button>
-        </Box>
-      </Box>
+        </Paper>
+      </Container>
     );
   }
 
   const { offer, passengers, pnr, ticketNo } = flightDetails;
 
   return (
-    <Box>
+    <Container sx={{ py: 4 }}>
+      {/* Top navigation and heading */}
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        <IconButton color="primary" onClick={() => navigate(`/trips/${tripId}`)}>
+          <ArrowBack />
+        </IconButton>
+        <Typography variant="h4" sx={{ ml: 2, fontWeight: 'bold' }}>
+          Flight Details
+        </Typography>
+      </Box>
+
       <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4">Flight Details</Typography>
+        {/* PNR and Ticket info */}
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }} 
+          justifyContent="space-between" 
+          alignItems={{ xs: 'flex-start', sm: 'center' }} 
+          spacing={2} 
+          sx={{ mb: 3 }}
+        >
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: '600' }}>Your Flight</Typography>
+          </Box>
           <Box>
             <Typography variant="body1" color="textSecondary">PNR: {pnr}</Typography>
             <Typography variant="body1" color="textSecondary">Ticket: {ticketNo}</Typography>
           </Box>
-        </Box>
+        </Stack>
 
-        <Card sx={{ mb: 4 }}>
+        <Card variant="outlined" sx={{ mb: 4 }}>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Airlines sx={{ mr: 1, color: 'primary.main' }} />
-                <Typography variant="h6">
+            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Airlines sx={{ color: 'primary.main' }} />
+                <Typography variant="h6" sx={{ fontWeight: 500 }}>
                   {offer.airline.name}
                 </Typography>
-              </Box>
+              </Stack>
               <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
                 {offer.totalPrice} {offer.currency}
               </Typography>
-            </Box>
+            </Stack>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <Box sx={{ flex: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <FlightTakeoff sx={{ mr: 1, color: 'primary.main' }} />
-                  <Typography variant="body1">
+            {/* Flight itinerary */}
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
+              {/* Departure */}
+              <Box flex={1}>
+                <Stack direction="row" alignItems="center" spacing={1} mb={1}>
+                  <FlightTakeoff sx={{ color: 'primary.main' }} />
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
                     {offer.flights[0].departure.airportCode}
-                    <Typography component="span" color="textSecondary" sx={{ ml: 1 }}>
+                    <Typography component="span" color="textSecondary" sx={{ ml: 1, fontSize: '0.9rem' }}>
                       {new Date(offer.flights[0].departure.time).toLocaleTimeString()}
                     </Typography>
                   </Typography>
-                </Box>
+                </Stack>
                 <Typography variant="body2" color="textSecondary">
                   {offer.flights[0].departure.airportName}
                 </Typography>
               </Box>
 
-              <Box sx={{ flex: 1, textAlign: 'center' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
-                  <AccessTime sx={{ mr: 1, fontSize: 'small', color: 'text.secondary' }} />
+              {/* Duration & Transit */}
+              <Box flex={1} textAlign="center">
+                <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" mb={1}>
+                  <AccessTime sx={{ color: 'text.secondary' }} />
                   <Typography variant="body2" color="textSecondary">
-                    {offer.isDirectFlight ? offer.flights[0].duration : offer.transitDetails.transitDuration}
+                    {offer.isDirectFlight 
+                      ? formatDuration(offer.flights[0].duration) 
+                      : formatDuration(offer.transitDetails.transitDuration)}
                   </Typography>
-                </Box>
-                <Divider>
-                  <Chip 
-                    label={offer.isDirectFlight ? 'Direct Flight' : offer.transitInfo} 
+                </Stack>
+                <Divider flexItem>
+                  <Chip
+                    label={offer.isDirectFlight ? 'Direct Flight' : offer.transitInfo}
                     size="small"
                     color={offer.isDirectFlight ? 'success' : 'default'}
                   />
                 </Divider>
               </Box>
 
-              <Box sx={{ flex: 1, textAlign: 'right' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', mb: 1 }}>
-                  <Typography variant="body1">
+              {/* Arrival */}
+              <Box flex={1} textAlign={{ xs: 'left', md: 'right' }}>
+                <Stack direction="row" justifyContent={{ xs: 'flex-start', md: 'flex-end' }} alignItems="center" spacing={1} mb={1}>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
                     {offer.flights[offer.flights.length - 1].arrival.airportCode}
-                    <Typography component="span" color="textSecondary" sx={{ mr: 1 }}>
+                    <Typography component="span" color="textSecondary" sx={{ ml: 1, fontSize: '0.9rem' }}>
                       {new Date(offer.flights[offer.flights.length - 1].arrival.time).toLocaleTimeString()}
                     </Typography>
                   </Typography>
-                  <FlightLand sx={{ ml: 1, color: 'primary.main' }} />
-                </Box>
+                  <FlightLand sx={{ color: 'primary.main' }} />
+                </Stack>
                 <Typography variant="body2" color="textSecondary">
                   {offer.flights[offer.flights.length - 1].arrival.airportName}
                 </Typography>
               </Box>
-            </Box>
+            </Stack>
 
             {!offer.isDirectFlight && (
-              <Box sx={{ mt: 1 }}>
+              <Box sx={{ mt: 2 }}>
                 <Typography variant="body2" color="textSecondary">
-                  Transit at {offer.transitDetails.transitLocation} • {offer.transitDetails.transitDuration} layover
+                  {formatDuration(offer.transitDetails.transitDuration)} layover
                 </Typography>
               </Box>
             )}
           </CardContent>
         </Card>
 
-        <Typography variant="h6" sx={{ mb: 2 }}>Passengers</Typography>
+        {/* Passengers Section */}
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: '600' }}>Passengers</Typography>
         <Grid container spacing={2}>
           {passengers.map((passenger, index) => (
             <Grid item xs={12} sm={6} key={index}>
-              <Card>
+              <Card variant="outlined">
                 <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Person sx={{ mr: 1, color: 'primary.main' }} />
-                    <Typography variant="h6">
+                  <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+                    <Person sx={{ color: 'primary.main' }} />
+                    <Typography variant="h6" sx={{ fontWeight: '500' }}>
                       {passenger.firstName} {passenger.lastName}
                     </Typography>
-                  </Box>
-                  <Typography color="textSecondary">
+                  </Stack>
+                  <Typography variant="body2" color="textSecondary" gutterBottom>
                     {passenger.travelerType === 'ADT' ? 'Adult' : 
                      passenger.travelerType === 'CHD' ? 'Child' : 'Infant'}
                   </Typography>
-                  <Typography variant="body2">Date of Birth: {passenger.dateOfBirth}</Typography>
-                  <Typography variant="body2">Email: {passenger.email}</Typography>
-                  <Typography variant="body2">Phone: {passenger.phoneNumber}</Typography>
+                  <Typography variant="body2" color="textSecondary">Date of Birth: {passenger.dateOfBirth}</Typography>
+                  <Typography variant="body2" color="textSecondary">Email: {passenger.email}</Typography>
+                  <Typography variant="body2" color="textSecondary">Phone: {passenger.phoneNumber}</Typography>
                   {passenger.frequentFlyerNumber && (
-                    <Typography variant="body2">
+                    <Typography variant="body2" color="textSecondary">
                       Frequent Flyer: {passenger.frequentFlyerNumber}
                     </Typography>
                   )}
@@ -191,14 +245,15 @@ export default function FlightDetails() {
         </Grid>
       </Paper>
 
-      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
         <Button 
           variant="contained" 
           onClick={() => navigate(`/trips/${tripId}`)}
+          startIcon={<ArrowBack />}
         >
           Back to Trip
         </Button>
       </Box>
-    </Box>
+    </Container>
   );
 }
