@@ -10,13 +10,19 @@ import {
   CircularProgress,
   Paper,
   Divider,
-  Chip
+  Chip,
+  Stack,
+  IconButton,
+  Collapse
 } from '@mui/material';
 import {
   FlightTakeoff,
   FlightLand,
   AccessTime,
-  Airlines
+  Airlines,
+  ArrowForward,
+  ExpandMore,
+  ExpandLess
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -26,26 +32,36 @@ export default function FlightResults() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [flightResults, setFlightResults] = useState([]);
+  const [expandedFlights, setExpandedFlights] = useState({});
 
   function formatDuration(isoDuration) {
-    // ISO 8601 duration format generally looks like: PT#H#M#S
-    // For example: PT2H30M means 2 hours and 30 minutes.
-    
-    // Extract hours, minutes, and seconds using a regex.
     const match = isoDuration.match(/P(T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)/);
-  
-    if (!match) return isoDuration; // return original if not matched
-  
+    if (!match) return isoDuration;
+    
     const hours = match[2] ? parseInt(match[2], 10) : 0;
     const minutes = match[3] ? parseInt(match[3], 10) : 0;
-    const seconds = match[4] ? parseInt(match[4], 10) : 0;
-  
+    
     let result = '';
     if (hours > 0) result += `${hours}h `;
-    if (minutes > 0) result += `${minutes}m `;
-    if (seconds > 0) result += `${seconds}s`;
-  
+    if (minutes > 0) result += `${minutes}m`;
+    
     return result.trim();
+  }
+
+  function formatDateTime(isoDateTime) {
+    const date = new Date(isoDateTime);
+    return {
+      date: date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      }),
+      time: date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      })
+    };
   }
 
   useEffect(() => {
@@ -82,6 +98,45 @@ export default function FlightResults() {
     });
   };
 
+  const toggleFlightDetails = (event, index) => {
+    event.stopPropagation();
+    setExpandedFlights(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  const FlightSegment = ({ flight, isArrival = false }) => {
+    const { date, time } = formatDateTime(
+      isArrival ? flight.arrival.time : flight.departure.time
+    );
+    const Icon = isArrival ? FlightLand : FlightTakeoff;
+    const airport = isArrival ? flight.arrival : flight.departure;
+
+    return (
+      <Box sx={{ flex: 1, textAlign: isArrival ? 'right' : 'left' }}>
+        <Stack direction="row" alignItems="center" spacing={1} justifyContent={isArrival ? 'flex-end' : 'flex-start'}>
+          {!isArrival && <Icon sx={{ color: 'primary.main' }} />}
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
+              {airport.airportCode}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {time}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {date}
+            </Typography>
+          </Box>
+          {isArrival && <Icon sx={{ color: 'primary.main' }} />}
+        </Stack>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          {airport.airportName}
+        </Typography>
+      </Box>
+    );
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -105,11 +160,13 @@ export default function FlightResults() {
 
   return (
     <Box>
-      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h4" sx={{ mb: 2 }}>Flight Results</Typography>
+      <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
+        <Typography variant="h4" sx={{ mb: 2, fontWeight: 'bold' }}>Flight Results</Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Typography variant="h6" sx={{ mr: 2 }}>
-            {location.state?.searchParams?.origin} → {location.state?.searchParams?.destination}
+          <Typography variant="h6" sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
+            {location.state?.searchParams?.origin} 
+            <ArrowForward sx={{ mx: 1 }} />
+            {location.state?.searchParams?.destination}
           </Typography>
           <Chip 
             label={location.state?.searchParams?.travelClass} 
@@ -117,8 +174,13 @@ export default function FlightResults() {
             variant="outlined"
           />
         </Box>
-        <Typography color="textSecondary">
-          {new Date(location.state?.searchParams?.departureDate).toLocaleDateString()} • 
+        <Typography color="text.secondary">
+          {new Date(location.state?.searchParams?.departureDate).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })} • 
           {' '}{location.state?.searchParams?.adults} Adult(s)
           {location.state?.searchParams?.children > 0 && `, ${location.state?.searchParams?.children} Child(ren)`}
           {location.state?.searchParams?.infants > 0 && `, ${location.state?.searchParams?.infants} Infant(s)`}
@@ -130,7 +192,10 @@ export default function FlightResults() {
           <Grid item xs={12} key={index}>
             <Card 
               sx={{ 
+                borderRadius: 2,
+                transition: 'all 0.3s ease',
                 '&:hover': {
+                  transform: 'translateY(-4px)',
                   boxShadow: 6,
                   cursor: 'pointer'
                 }
@@ -141,69 +206,109 @@ export default function FlightResults() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Airlines sx={{ mr: 1, color: 'primary.main' }} />
-                    <Typography variant="h6">
+                    <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
                       {flight.airline.name}
                     </Typography>
                   </Box>
-                  <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
+                  <Typography variant="h5" color="primary" sx={{ fontWeight: 'bold' }}>
                     {flight.totalPrice} {flight.currency}
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <FlightTakeoff sx={{ mr: 1, color: 'primary.main' }} />
-                      <Typography variant="body1">
-                        {flight.flights[0].departure.airportCode}
-                        <Typography component="span" color="textSecondary" sx={{ ml: 1 }}>
-                          {new Date(flight.flights[0].departure.time).toLocaleTimeString()}
-                        </Typography>
-                      </Typography>
-                    </Box>
-                    <Typography variant="body2" color="textSecondary">
-                      {flight.flights[0].departure.airportName}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ flex: 1, textAlign: 'center' }}>
+                {/* Main Flight Information */}
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                  <FlightSegment flight={flight.flights[0]} />
+                  
+                  <Box sx={{ flex: 1, textAlign: 'center', mx: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
                       <AccessTime sx={{ mr: 1, fontSize: 'small', color: 'text.secondary' }} />
-                      <Typography variant="body2" color="textSecondary">
-                        {flight.isDirectFlight ? flight.flights[0].duration : formatDuration(flight.transitDetails.transitDuration)}
+                      <Typography variant="body2" color="text.secondary">
+                        Total Duration: {formatDuration(flight.flights.reduce((total, f) => {
+                          const durationMatch = f.duration.match(/PT(\d+)H(\d+)M/);
+                          if (!durationMatch) return total;
+                          const hours = parseInt(durationMatch[1], 10);
+                          const minutes = parseInt(durationMatch[2], 10);
+                          return `PT${total.match(/PT(\d+)H(\d+)M/) ? 
+                            parseInt(total.match(/PT(\d+)H(\d+)M/)[1], 10) + hours : hours}H${
+                            total.match(/PT(\d+)H(\d+)M/) ? 
+                            parseInt(total.match(/PT(\d+)H(\d+)M/)[2], 10) + minutes : minutes}M`;
+                        }, 'PT0H0M'))}
                       </Typography>
                     </Box>
                     <Divider>
                       <Chip 
-                        label={flight.isDirectFlight ? 'Direct Flight' : flight.transitInfo} 
+                        label={flight.isDirectFlight ? 'Direct Flight' : `1 Stop via ${flight.transitDetails.transitLocation}`}
                         size="small"
-                        color={flight.isDirectFlight ? 'success' : 'default'}
+                        color={flight.isDirectFlight ? 'success' : 'warning'}
+                        variant={flight.isDirectFlight ? 'filled' : 'outlined'}
                       />
                     </Divider>
                   </Box>
 
-                  <Box sx={{ flex: 1, textAlign: 'right' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', mb: 1 }}>
-                      <Typography variant="body1">
-                        {flight.flights[flight.flights.length - 1].arrival.airportCode}
-                        <Typography component="span" color="textSecondary" sx={{ mr: 1 }}>
-                          {new Date(flight.flights[flight.flights.length - 1].arrival.time).toLocaleTimeString()}
-                        </Typography>
-                      </Typography>
-                      <FlightLand sx={{ ml: 1, color: 'primary.main' }} />
-                    </Box>
-                    <Typography variant="body2" color="textSecondary">
-                      {flight.flights[flight.flights.length - 1].arrival.airportName}
-                    </Typography>
-                  </Box>
+                  <FlightSegment flight={flight.flights[flight.flights.length - 1]} isArrival />
                 </Box>
 
+                {/* Expand/Collapse Button for Transit Flights */}
                 {!flight.isDirectFlight && (
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="body2" color="textSecondary">
-                      Transit at {flight.transitDetails.transitLocation} • {formatDuration(flight.transitDetails.transitDuration)} layover
-                    </Typography>
-                  </Box>
+                  <>
+                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                      <IconButton 
+                        onClick={(e) => toggleFlightDetails(e, index)}
+                        size="small"
+                        sx={{ 
+                          bgcolor: 'action.hover',
+                          '&:hover': { bgcolor: 'action.selected' }
+                        }}
+                      >
+                        {expandedFlights[index] ? <ExpandLess /> : <ExpandMore />}
+                      </IconButton>
+                    </Box>
+
+                    <Collapse in={expandedFlights[index]}>
+                      <Box sx={{ mt: 2 }}>
+                        {/* First Leg */}
+                        <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'background.default' }}>
+                          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                            First Leg
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Typography variant="body2">
+                              {flight.flights[0].departure.airportCode} → {flight.flights[0].arrival.airportCode}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Duration: {formatDuration(flight.flights[0].duration)}
+                            </Typography>
+                          </Box>
+                        </Paper>
+
+                        {/* Layover Information */}
+                        <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'action.hover' }}>
+                          <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center' }}>
+                            <AccessTime sx={{ mr: 1, fontSize: 'small' }} />
+                            Layover at {flight.transitDetails.transitLocation}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Connection time: {formatDuration(flight.transitDetails.transitDuration)}
+                          </Typography>
+                        </Paper>
+
+                        {/* Second Leg */}
+                        <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
+                          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                            Second Leg
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Typography variant="body2">
+                              {flight.flights[1].departure.airportCode} → {flight.flights[1].arrival.airportCode}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Duration: {formatDuration(flight.flights[1].duration)}
+                            </Typography>
+                          </Box>
+                        </Paper>
+                      </Box>
+                    </Collapse>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -213,7 +318,7 @@ export default function FlightResults() {
 
       {flightResults.length === 0 && !loading && !error && (
         <Box sx={{ textAlign: 'center', mt: 4 }}>
-          <Typography variant="h6" color="textSecondary">
+          <Typography variant="h6" color="text.secondary">
             No flights found for your search criteria
           </Typography>
           <Button 
