@@ -10,6 +10,7 @@ import {
   Paper,
   Link
 } from '@mui/material';
+import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -55,6 +56,10 @@ export default function Login() {
             boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.2)',
           }}
         >
+          <FlightTakeoffIcon sx={{ fontSize: 40, color: '#5D9FFF', mb: 1 }} />
+          <Typography variant="h5" color="primary" fontWeight="bold" textAlign="center" sx={{ mb: 1 }}>
+            FREQUENT FLYERS
+          </Typography>
           <Typography component="h1" variant="h4" fontWeight="bold" textAlign="center">
             Welcome Back
           </Typography>

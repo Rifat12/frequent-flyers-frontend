@@ -59,7 +59,7 @@ export default function MainLayout({ children }) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Travel Planner
+            Frequent Flyers
           </Typography>
           {user && (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
