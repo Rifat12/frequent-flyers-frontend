@@ -22,7 +22,8 @@ import {
   Airlines,
   ArrowForward,
   ExpandMore,
-  ExpandLess
+  ExpandLess,
+  ArrowBack
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -161,7 +162,16 @@ export default function FlightResults() {
   return (
     <Box>
       <Paper elevation={3} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
-        <Typography variant="h4" sx={{ mb: 2, fontWeight: 'bold' }}>Flight Results</Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Flight Results</Typography>
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBack />}
+            onClick={() => navigate(-1)}
+          >
+            Go Back
+          </Button>
+        </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6" sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
             {location.state?.searchParams?.origin} 
