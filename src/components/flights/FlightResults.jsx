@@ -27,6 +27,27 @@ export default function FlightResults() {
   const [error, setError] = useState('');
   const [flightResults, setFlightResults] = useState([]);
 
+  function formatDuration(isoDuration) {
+    // ISO 8601 duration format generally looks like: PT#H#M#S
+    // For example: PT2H30M means 2 hours and 30 minutes.
+    
+    // Extract hours, minutes, and seconds using a regex.
+    const match = isoDuration.match(/P(T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)/);
+  
+    if (!match) return isoDuration; // return original if not matched
+  
+    const hours = match[2] ? parseInt(match[2], 10) : 0;
+    const minutes = match[3] ? parseInt(match[3], 10) : 0;
+    const seconds = match[4] ? parseInt(match[4], 10) : 0;
+  
+    let result = '';
+    if (hours > 0) result += `${hours}h `;
+    if (minutes > 0) result += `${minutes}m `;
+    if (seconds > 0) result += `${seconds}s`;
+  
+    return result.trim();
+  }
+
   useEffect(() => {
     const searchFlights = async () => {
       if (!location.state?.searchParams) {
@@ -149,7 +170,7 @@ export default function FlightResults() {
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
                       <AccessTime sx={{ mr: 1, fontSize: 'small', color: 'text.secondary' }} />
                       <Typography variant="body2" color="textSecondary">
-                        {flight.isDirectFlight ? flight.flights[0].duration : flight.transitDetails.transitDuration}
+                        {flight.isDirectFlight ? flight.flights[0].duration : formatDuration(flight.transitDetails.transitDuration)}
                       </Typography>
                     </Box>
                     <Divider>
@@ -180,7 +201,7 @@ export default function FlightResults() {
                 {!flight.isDirectFlight && (
                   <Box sx={{ mt: 1 }}>
                     <Typography variant="body2" color="textSecondary">
-                      Transit at {flight.transitDetails.transitLocation} • {flight.transitDetails.transitDuration} layover
+                      Transit at {flight.transitDetails.transitLocation} • {formatDuration(flight.transitDetails.transitDuration)} layover
                     </Typography>
                   </Box>
                 )}
