@@ -20,7 +20,11 @@ import {
   Step,
   StepLabel,
   StepContent,
-  Alert
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   FlightTakeoff,
@@ -28,7 +32,8 @@ import {
   AccessTime,
   Airlines,
   CreditCard,
-  Lock
+  Lock,
+  CheckCircleOutline
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -57,7 +62,14 @@ const CARD_ELEMENT_OPTIONS = {
     }
   }
 };
-
+const logBookingResponse = (response) => {
+  console.group('Flight Booking Response');
+  console.log('Full Response:', response);
+  console.log('PNR:', response?.pnr);
+  console.log('Ticket Number:', response?.ticketNumber);
+  console.log('Booking ID:', response?.bookingId);
+  console.groupEnd();
+};
 export default function FlightBooking() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -88,6 +100,8 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
   const [cardError, setCardError] = useState('');
   const [activeStep, setActiveStep] = useState(0);
   const [passengers, setPassengers] = useState([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState(null);
 
   useEffect(() => {
     const totalPassengers = (searchParams.adults || 0) + (searchParams.children || 0);
@@ -161,6 +175,13 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
     }
   };
 
+  const handleConfirmationClose = () => {
+    setShowConfirmation(false);
+    if (bookingDetails) {
+      navigate(`/trips/${tripId}/flights/${bookingDetails.bookingId}`);
+    }
+  };
+
   const handleBookFlight = async () => {
     if (!passengers.every(isPassengerFormValid)) {
       setError('Please fill in all passenger information');
@@ -204,7 +225,7 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
       }
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        await axios.post('http://localhost:4000/flights/book', {
+        const bookingResponse = await axios.post('http://localhost:4000/flights/book', {
           tripId: tripId,
           flightOfferInfo: flight,
           passengerInfo: passengers.map(passenger => ({
@@ -215,7 +236,15 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
           withCredentials: true
         });
 
-        navigate(`/trips/${tripId}`);
+        console.log(bookingResponse) 
+
+        if (bookingResponse.data.success) {
+          setBookingDetails(bookingResponse.data.data.data);
+          logBookingResponse(bookingResponse.data.data.data);
+          setShowConfirmation(true);
+        } else {
+          throw new Error('Booking failed');
+        }
       } else {
         throw new Error('Payment not successful');
       }
@@ -526,6 +555,40 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
           </Button>
         </Box>
       </Paper>
+
+      <Dialog
+        open={showConfirmation}
+        onClose={handleConfirmationClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ textAlign: 'center', pt: 3 }}>
+          <CheckCircleOutline sx={{ color: 'success.main', fontSize: 60, mb: 2 }} />
+          <Typography variant="h5">Booking Confirmed!</Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Your flight has been successfully booked
+            </Typography>
+            <Typography variant="body1" color="text.secondary" paragraph>
+              Reservation Number (PNR): <strong>{bookingDetails?.pnr}</strong>
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Ticket Number: <strong>{bookingDetails?.ticketNo}</strong>
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={handleConfirmationClose}
+            color="primary"
+          >
+            View Booking Details
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
