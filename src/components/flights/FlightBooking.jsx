@@ -19,13 +19,21 @@ import {
   Stepper,
   Step,
   StepLabel,
-  StepContent
+  StepContent,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import {
   FlightTakeoff,
   FlightLand,
   AccessTime,
-  Airlines
+  Airlines,
+  CreditCard,
+  Lock,
+  CheckCircleOutline
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -34,8 +42,34 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 
 // Initialize Stripe
-const stripePromise = loadStripe('pk_test_51NarfeFarHSDOBPzLzbQkGwdV3WBpPq0hWQVD8LK7EIWAYvwuVOCuVVicxrA2sme8YTT6aKZTrpfTjH2PD3AoEmi008XQpq8zW'); // replace with your actual publishable key
+const stripePromise = loadStripe('pk_test_51NarfeFarHSDOBPzLzbQkGwdV3WBpPq0hWQVD8LK7EIWAYvwuVOCuVVicxrA2sme8YTT6aKZTrpfTjH2PD3AoEmi008XQpq8zW');
 
+const CARD_ELEMENT_OPTIONS = {
+  style: {
+    base: {
+      color: '#32325d',
+      fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+      fontSmoothing: 'antialiased',
+      fontSize: '16px',
+      '::placeholder': {
+        color: '#aab7c4'
+      },
+      padding: '10px 12px',
+    },
+    invalid: {
+      color: '#fa755a',
+      iconColor: '#fa755a'
+    }
+  }
+};
+const logBookingResponse = (response) => {
+  console.group('Flight Booking Response');
+  console.log('Full Response:', response);
+  console.log('PNR:', response?.pnr);
+  console.log('Ticket Number:', response?.ticketNumber);
+  console.log('Booking ID:', response?.bookingId);
+  console.groupEnd();
+};
 export default function FlightBooking() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -63,8 +97,11 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [cardError, setCardError] = useState('');
   const [activeStep, setActiveStep] = useState(0);
   const [passengers, setPassengers] = useState([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [bookingDetails, setBookingDetails] = useState(null);
 
   useEffect(() => {
     const totalPassengers = (searchParams.adults || 0) + (searchParams.children || 0);
@@ -130,15 +167,34 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
+  const handleCardChange = (event) => {
+    if (event.error) {
+      setCardError(event.error.message);
+    } else {
+      setCardError('');
+    }
+  };
+
+  const handleConfirmationClose = () => {
+    setShowConfirmation(false);
+    if (bookingDetails) {
+      navigate(`/trips/${tripId}/flights/${bookingDetails.bookingId}`);
+    }
+  };
+
   const handleBookFlight = async () => {
     if (!passengers.every(isPassengerFormValid)) {
-      console.log(passengers)
       setError('Please fill in all passenger information');
       return;
     }
 
     if (!stripe || !elements) {
       setError('Stripe is not loaded yet. Please try again.');
+      return;
+    }
+
+    if (cardError) {
+      setError('Please correct the card information before proceeding.');
       return;
     }
 
@@ -169,7 +225,7 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
       }
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        await axios.post('http://localhost:4000/flights/book', {
+        const bookingResponse = await axios.post('http://localhost:4000/flights/book', {
           tripId: tripId,
           flightOfferInfo: flight,
           passengerInfo: passengers.map(passenger => ({
@@ -180,7 +236,15 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
           withCredentials: true
         });
 
-        navigate(`/trips/${tripId}`);
+        console.log(bookingResponse) 
+
+        if (bookingResponse.data.success) {
+          setBookingDetails(bookingResponse.data.data.data);
+          logBookingResponse(bookingResponse.data.data.data);
+          setShowConfirmation(true);
+        } else {
+          throw new Error('Booking failed');
+        }
       } else {
         throw new Error('Payment not successful');
       }
@@ -394,26 +458,92 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
 
         {activeStep === passengers.length && (
           <Box sx={{ mt: 4 }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Payment Details
-            </Typography>
-            <Box sx={{ mb: 2, border: '1px solid #ccc', p: 2, borderRadius: 1 }}>
-              <CardElement />
-            </Box>
-            <Button
-              variant="contained"
-              onClick={handleBookFlight}
-              disabled={loading}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Pay & Book Flight'}
-            </Button>
+            <Card variant="outlined" sx={{ mb: 4 }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Payment Summary
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography>Flight Price ({passengers.length} passengers)</Typography>
+                      <Typography>{flight.totalPrice} {flight.currency}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Typography>Taxes & Fees</Typography>
+                      <Typography>Included</Typography>
+                    </Box>
+                    <Divider sx={{ my: 2 }} />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="h6">Total</Typography>
+                      <Typography variant="h6" color="primary">
+                        {flight.totalPrice} {flight.currency}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+
+            <Card variant="outlined" sx={{ mb: 4 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <CreditCard sx={{ mr: 1, color: 'primary.main' }} />
+                  <Typography variant="h6">
+                    Payment Details
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ 
+                  mb: 3,
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: cardError ? 'error.main' : '#e0e0e0',
+                  borderRadius: 1,
+                  backgroundColor: '#f8f9fa'
+                }}>
+                  <CardElement 
+                    options={CARD_ELEMENT_OPTIONS}
+                    onChange={handleCardChange}
+                  />
+                </Box>
+
+                {cardError && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {cardError}
+                  </Alert>
+                )}
+
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Lock sx={{ mr: 1, fontSize: 'small', color: 'text.secondary' }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Your payment information is encrypted and secure
+                  </Typography>
+                </Box>
+
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  onClick={handleBookFlight}
+                  disabled={loading || !!cardError}
+                  sx={{ mt: 2 }}
+                >
+                  {loading ? (
+                    <CircularProgress size={24} sx={{ color: 'white' }} />
+                  ) : (
+                    `Pay ${flight.totalPrice} ${flight.currency} & Book Flight`
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
           </Box>
         )}
 
         {error && (
-          <Typography color="error" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mt: 2 }}>
             {error}
-          </Typography>
+          </Alert>
         )}
 
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-start' }}>
@@ -425,6 +555,40 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
           </Button>
         </Box>
       </Paper>
+
+      <Dialog
+        open={showConfirmation}
+        onClose={handleConfirmationClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ textAlign: 'center', pt: 3 }}>
+          <CheckCircleOutline sx={{ color: 'success.main', fontSize: 60, mb: 2 }} />
+          <Typography variant="h5">Booking Confirmed!</Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ textAlign: 'center', py: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Your flight has been successfully booked
+            </Typography>
+            <Typography variant="body1" color="text.secondary" paragraph>
+              Reservation Number (PNR): <strong>{bookingDetails?.pnr}</strong>
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Ticket Number: <strong>{bookingDetails?.ticketNo}</strong>
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button
+            variant="contained"
+            onClick={handleConfirmationClose}
+            color="primary"
+          >
+            View Booking Details
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
