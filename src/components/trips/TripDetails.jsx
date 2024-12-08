@@ -23,9 +23,12 @@ import {
   Alert,
   Collapse,
   IconButton,
-  CardActionArea
+  CardActionArea,
+  Stack,
+  Chip
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import { useParams, useNavigate } from 'react-router-dom';
 
 function TabPanel({ children, value, index }) {
@@ -117,7 +120,6 @@ export default function TripDetails() {
         withCredentials: true
       });
       const airportsData = response.data.data || [];
-      // Ensure each airport has a displayName
       const formattedAirports = airportsData.map(airport => ({
         ...airport,
         displayName: `${airport.city} (${airport.iata}) - ${airport.name}`
@@ -146,7 +148,6 @@ export default function TripDetails() {
       if (response.data.success) {
         const searchData = response.data.data;
         
-        // Update flight search state
         setFlightSearch({
           origin: searchData.origin || '',
           destination: searchData.destination || '',
@@ -158,7 +159,6 @@ export default function TripDetails() {
           tripType: searchData.tripType || 'one-way'
         });
 
-        // Get airport details for display
         if (searchData.origin) {
           try {
             const originResponse = await axios.get(`http://localhost:4000/airports/${searchData.origin}`, {
@@ -346,23 +346,41 @@ export default function TripDetails() {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Search Flights</DialogTitle>
+        <DialogTitle>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="h6">Search Flights</Typography>
+            <Chip 
+              icon={<SmartToyIcon />} 
+              label="Powered by AI" 
+              color="primary" 
+              size="small"
+              sx={{ ml: 1 }}
+            />
+          </Stack>
+        </DialogTitle>
         <DialogContent>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 3, mt: 1 }}>
+            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+              Use our AI-powered intelligent search to find flights naturally
+            </Typography>
             <TextField
               fullWidth
               label="Describe your flight (e.g., 'economy flight from Chicago to NYC for me and my child on December 15th')"
               value={naturalQuery}
               onChange={(e) => setNaturalQuery(e.target.value)}
               sx={{ mb: 1 }}
+              InputProps={{
+                startAdornment: <SmartToyIcon sx={{ mr: 1, color: 'primary.main' }} />,
+              }}
             />
             <Button 
               variant="outlined" 
               onClick={handleIntelligentSearch}
               disabled={!naturalQuery.trim() || intelligentSearchLoading}
               sx={{ mr: 1 }}
+              startIcon={intelligentSearchLoading ? <CircularProgress size={20} /> : <SmartToyIcon />}
             >
-              {intelligentSearchLoading ? <CircularProgress size={24} /> : 'Search with Natural Language'}
+              Search with AI
             </Button>
           </Box>
 
@@ -381,9 +399,13 @@ export default function TripDetails() {
               }
               sx={{ mb: 2 }}
             >
-              Your search has been processed! The form below has been filled with your preferences.
+              AI has processed your search! The form below has been filled with your preferences.
             </Alert>
           </Collapse>
+
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+            Or use the traditional search form below
+          </Typography>
 
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
