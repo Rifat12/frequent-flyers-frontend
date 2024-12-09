@@ -74,7 +74,7 @@ export default function TripDetails() {
 
   const fetchTripDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:4000/trips/${tripId}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/trips/${tripId}`, {
         withCredentials: true
       });
       setTrip(response.data);
@@ -85,7 +85,7 @@ export default function TripDetails() {
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get(`http://localhost:4000/trips/${tripId}/events`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/trips/${tripId}/events`, {
         withCredentials: true
       });
       setEvents(response.data);
@@ -97,7 +97,7 @@ export default function TripDetails() {
   const handleAddEvent = async () => {
     try {
       await axios.post(
-        `http://localhost:4000/trips/${tripId}/events`,
+        `${import.meta.env.VITE_API_BASE_URL}/trips/${tripId}/events`,
         newEvent,
         { withCredentials: true }
       );
@@ -116,7 +116,7 @@ export default function TripDetails() {
     }
     setSearchingAirports(true);
     try {
-      const response = await axios.get(`http://localhost:4000/airports/search?query=${query}`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/airports/search?query=${query}`, {
         withCredentials: true
       });
       const airportsData = response.data.data || [];
@@ -138,7 +138,7 @@ export default function TripDetails() {
     setIntelligentSearchLoading(true);
     setError('');
     try {
-      const response = await axios.post('http://localhost:4000/flights/intelligent-search', {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/flights/intelligent-search`, {
         tripId: parseInt(tripId),
         naturalQuery: naturalQuery
       }, {
@@ -161,7 +161,7 @@ export default function TripDetails() {
 
         if (searchData.origin) {
           try {
-            const originResponse = await axios.get(`http://localhost:4000/airports/${searchData.origin}`, {
+            const originResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/airports/${searchData.origin}`, {
               withCredentials: true
             });
             if (originResponse.data.success) {
@@ -178,7 +178,7 @@ export default function TripDetails() {
 
         if (searchData.destination) {
           try {
-            const destResponse = await axios.get(`http://localhost:4000/airports/${searchData.destination}`, {
+            const destResponse = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/airports/${searchData.destination}`, {
               withCredentials: true
             });
             if (destResponse.data.success) {

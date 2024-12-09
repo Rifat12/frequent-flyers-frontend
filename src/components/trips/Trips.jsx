@@ -35,7 +35,7 @@ export default function Trips() {
 
   const fetchTrips = async () => {
     try {
-      const response = await axios.get("http://localhost:4000/trips", {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/trips`, {
         withCredentials: true,
       });
       setTrips(response.data);
@@ -46,7 +46,7 @@ export default function Trips() {
 
   const handleCreateTrip = async () => {
     try {
-      await axios.post("http://localhost:4000/trips", newTrip, {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/trips`, newTrip, {
         withCredentials: true,
       });
       setOpenDialog(false);

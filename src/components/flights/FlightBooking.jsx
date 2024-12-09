@@ -203,7 +203,7 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
 
     try {
       const amountInCents = Math.round(flight.totalPrice * 100);
-      const paymentIntentRes = await axios.post('http://localhost:4000/payments/create-payment-intent', {
+      const paymentIntentRes = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/payments/create-payment-intent`, {
         amount: amountInCents,
         currency: flight.currency.toLowerCase()
       });
@@ -225,7 +225,7 @@ function FlightBookingForm({ flight, tripId, searchParams, navigate }) {
       }
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
-        const bookingResponse = await axios.post('http://localhost:4000/flights/book', {
+        const bookingResponse = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/flights/book`, {
           tripId: tripId,
           flightOfferInfo: flight,
           passengerInfo: passengers.map(passenger => ({

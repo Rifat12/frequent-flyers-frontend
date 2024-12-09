@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:4000/auth/login', {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/login`, {
         email,
         password
       }, {
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:4000/auth/register', {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/register`, {
         email,
         password
       }, {
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await axios.post('http://localhost:4000/auth/logout', {}, {
+      await axios.post(`${import.meta.env.VITE_API_BASE_URL}/auth/logout`, {}, {
         withCredentials: true
       });
       setUser(null);

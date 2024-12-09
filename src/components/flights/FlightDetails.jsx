@@ -57,7 +57,7 @@ export default function FlightDetails() {
   useEffect(() => {
     const fetchFlightDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:4000/trips/${tripId}`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/trips/${tripId}`, {
           withCredentials: true
         });
         const flight = response.data.flightOffers.find(f => f.flightID === parseInt(flightId));

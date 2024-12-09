@@ -74,7 +74,7 @@ export default function FlightResults() {
 
       try {
         const response = await axios.post(
-          'http://localhost:4000/flights/search',
+          `${import.meta.env.VITE_API_BASE_URL}/flights/search`,
           location.state.searchParams,
           { withCredentials: true }
         );
