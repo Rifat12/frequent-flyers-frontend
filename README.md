@@ -4,7 +4,7 @@ This template provides a minimal setup to get React working in Vite with HMR and
 
 Currently, two official plugins are available:
 
-## to run this in dev mode:|
+## to run this in dev mode
 
 First, add this to `.env` file of the backend
 
